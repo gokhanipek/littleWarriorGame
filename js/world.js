@@ -1,7 +1,7 @@
 // World state: trees (with fruits) and plants, plus the collection logic
 // that runs each frame. Generation is randomized within config ranges.
 
-import { WORLD, FLORA, PICKUP } from "./config.js";
+import { WORLD, FLORA, PICKUP, GAME } from "./config.js";
 
 function randInt(min, range) {
   return Math.floor(Math.random() * range) + min;
@@ -48,6 +48,9 @@ export function createWorld() {
     plants,
     collectedFruits: 0,
     collectedPlants: 0,
+    // Timed-mode state.
+    phase: "ready",              // "ready" | "playing" | "gameover"
+    timeLeft: GAME.startSeconds, // seconds remaining
   };
 }
 
@@ -60,6 +63,9 @@ export function leavesY(tree) {
 // Advance collection/respawn state. `player` is the player object; `now` is
 // a Date.now() timestamp.
 export function updateCollection(world, player, now) {
+  // No collecting once the run is over.
+  if (world.phase !== "playing") return;
+
   world.trees.forEach((tree) => {
     const baseLeavesY = leavesY(tree);
     tree.fruits.forEach((fruit) => {
@@ -72,6 +78,7 @@ export function updateCollection(world, player, now) {
         fruit.collected = true;
         fruit.respawnTime = now + FLORA.respawnMs;
         world.collectedFruits++;
+        world.timeLeft += GAME.fruitBonusSeconds;
       } else if (fruit.collected && now > fruit.respawnTime) {
         fruit.collected = false;
       }
@@ -87,8 +94,19 @@ export function updateCollection(world, player, now) {
       plant.collected = true;
       plant.respawnTime = now + FLORA.respawnMs;
       world.collectedPlants++;
+      world.timeLeft += GAME.plantBonusSeconds;
     } else if (plant.collected && now > plant.respawnTime) {
       plant.collected = false;
     }
   });
+}
+
+// Count down the timer and flip to game over when it runs out. dt is seconds.
+export function updateTimer(world, dt) {
+  if (world.phase !== "playing") return;
+  world.timeLeft -= dt;
+  if (world.timeLeft <= 0) {
+    world.timeLeft = 0;
+    world.phase = "gameover";
+  }
 }

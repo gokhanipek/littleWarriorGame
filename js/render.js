@@ -1,7 +1,7 @@
 // All canvas drawing. Rendering is pure output: it reads game state and the
 // camera but never mutates them.
 
-import { CANVAS, WORLD, FLORA, SPRITE, CYCLE, CAMERA, STAMINA, PLAYER } from "./config.js";
+import { CANVAS, WORLD, FLORA, SPRITE, CYCLE, CAMERA, STAMINA, PLAYER, GAME } from "./config.js";
 import { images } from "./assets.js";
 import { leavesY } from "./world.js";
 
@@ -167,6 +167,41 @@ function drawUI(ctx, world, player) {
   ctx.fillRect(barX, barY, barWidth, barHeight);
   ctx.fillStyle = "limegreen";
   ctx.fillRect(barX, barY, (player.stamina / STAMINA.max) * barWidth, barHeight);
+
+  // Countdown timer, centered near the top. Turns red in the final seconds.
+  const seconds = Math.ceil(world.timeLeft);
+  ctx.textAlign = "center";
+  ctx.font = "bold 28px Arial";
+  ctx.fillStyle = world.timeLeft <= 3 ? "#D22" : "black";
+  ctx.fillText(seconds + "s", CANVAS.width / 2, 34);
+  ctx.textAlign = "left";
+}
+
+// Full-screen score screen shown when the timer runs out.
+function drawGameOver(ctx, world) {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(0, 0, CANVAS.width, CANVAS.height);
+
+  const cx = CANVAS.width / 2;
+  ctx.textAlign = "center";
+
+  ctx.fillStyle = "white";
+  ctx.font = "bold 40px Arial";
+  ctx.fillText("Time's Up!", cx, 120);
+
+  const score = world.collectedFruits + world.collectedPlants;
+  ctx.font = "bold 30px Arial";
+  ctx.fillText("Score: " + score, cx, 180);
+
+  ctx.font = "20px Arial";
+  ctx.fillText("Fruits: " + world.collectedFruits + "    Plants: " + world.collectedPlants, cx, 220);
+
+  ctx.font = "18px Arial";
+  ctx.fillStyle = "#DDD";
+  ctx.fillText("Score submitted to the leaderboard", cx, 265);
+  ctx.fillText("Press Enter or R to play again", cx, 295);
+
+  ctx.textAlign = "left";
 }
 
 export function render(ctx, world, player, camera) {
@@ -186,4 +221,10 @@ export function render(ctx, world, player, camera) {
 
   // UI is drawn in screen space (unscaled) so text stays crisp and fixed.
   drawUI(ctx, world, player);
+
+  // The "ready" screen is an HTML overlay (see index.html) so it can host a
+  // text input. Only the game-over screen is drawn on the canvas.
+  if (world.phase === "gameover") {
+    drawGameOver(ctx, world);
+  }
 }

@@ -60,12 +60,20 @@ export const SPRITE = {
   },
 };
 
+// Timed game mode: a countdown that collecting flora extends. When it hits
+// zero the run ends and a score screen is shown.
+export const GAME = {
+  startSeconds: 10,
+  fruitBonusSeconds: 2,  // time gained per fruit collected
+  plantBonusSeconds: 1,  // time gained per plant (mushroom) collected
+};
+
 // Trees, plants and their fruits
 export const FLORA = {
-  treeMin: 20,
-  treeRange: 50,       // count = treeMin + rand(0..treeRange)
-  plantMin: 20,
-  plantRange: 80,
+  treeMin: 6,
+  treeRange: 6,        // count = treeMin + rand(0..treeRange)
+  plantMin: 6,
+  plantRange: 8,
   fruitMin: 1,
   fruitRange: 3,
   respawnMs: 30000,

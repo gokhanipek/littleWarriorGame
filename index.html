@@ -2,22 +2,109 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>2D Prototype MVP with Animated Character</title>
+  <title>Little Warrior</title>
   <style>
-    canvas {
+    body {
+      margin: 0;
+      background: #222;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Centered stage that holds the canvas and any overlays. */
+    #stage {
       position: fixed;
       left: 50%;
       top: 50%;
+      width: 800px;
+      height: 400px;
       margin-left: -400px;
       margin-top: -200px;
-      background: #87CEEB; /* sky blue */
+    }
+
+    #game {
       display: block;
+      width: 800px;
+      height: 400px;
+      background: #87CEEB; /* sky blue */
       border: 1px solid #333;
     }
+
+    /* Start overlay: name entry before the run begins. */
+    #startOverlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      text-align: center;
+    }
+
+    #startOverlay h1 {
+      margin: 0;
+      font-size: 40px;
+    }
+
+    #startOverlay p {
+      margin: 0;
+      font-size: 15px;
+      color: #ddd;
+    }
+
+    #nameInput {
+      font-size: 18px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      width: 220px;
+      text-align: center;
+    }
+
+    .btn {
+      font-size: 18px;
+      padding: 9px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .btn:hover { background: #43a047; }
+
+    #startError {
+      color: #ff9a9a;
+      font-size: 13px;
+      min-height: 16px;
+    }
+
+    #leaderboardLink {
+      color: #cfe8ff;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    #leaderboardLink:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-<canvas id="game" width="800" height="400"></canvas>
+<div id="stage">
+  <canvas id="game" width="800" height="400"></canvas>
+
+  <div id="startOverlay">
+    <h1>Little Warrior</h1>
+    <p>Collect fruits (+2s) and plants (+1s) before time runs out.</p>
+    <p>Arrows to move &bull; Shift to run &bull; Space to jump</p>
+    <input id="nameInput" type="text" maxlength="24" placeholder="Enter your name" autocomplete="off" />
+    <div id="startError"></div>
+    <button id="startButton" class="btn">Start</button>
+    <a id="leaderboardLink" href="./leaderboard.html">View leaderboard</a>
+  </div>
+</div>
+
 <script type="module" src="./js/main.js"></script>
 </body>
 </html>
