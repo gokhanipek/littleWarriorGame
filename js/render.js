@@ -28,106 +28,116 @@ function cycleProgress() {
   return (Date.now() % CYCLE.durationMs) / CYCLE.durationMs;
 }
 
-function drawBackground(ctx, cameraX) {
+function drawBackground(ctx, camera) {
   const phase = cycleProgress();
   const t = phase < 0.5 ? phase * 2 : (1 - phase) * 2; // 0 -> 1 -> 0 (night at 1)
 
   const topColor = lerpColor(CYCLE.dayTop, CYCLE.nightTop, t);
   const bottomColor = lerpColor(CYCLE.dayBottom, CYCLE.nightBottom, t);
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS.height);
+  // The visible area in world units shrinks under zoom, so the sky fill and
+  // gradient must span the view size, not the full physical canvas. The fill
+  // is anchored to the camera so it always covers the visible view.
+  const viewWidth = CANVAS.width / CAMERA.zoom;
+  const viewHeight = CANVAS.height / CAMERA.zoom;
+
+  const gradient = ctx.createLinearGradient(0, camera.y, 0, camera.y + viewHeight);
   gradient.addColorStop(0, topColor);
   gradient.addColorStop(1, bottomColor);
   ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, CANVAS.width, CANVAS.height);
+  ctx.fillRect(camera.x, camera.y, viewWidth, viewHeight);
 
-  const sky = cameraX * CAMERA.parallaxSky;
+  // Parallax layers scroll slower than the world. Vertical parallax is
+  // lighter so the sky doesn't slide off during jumps.
+  const skyX = camera.x * CAMERA.parallaxSky;
+  const skyY = camera.y * CAMERA.parallaxSky;
 
   // Sun / moon
   ctx.fillStyle = t < 0.5 ? "yellow" : "white";
   ctx.beginPath();
-  ctx.arc(700 - sky, 80, 40, 0, Math.PI * 2);
+  ctx.arc(700 - skyX, 80 - skyY, 40, 0, Math.PI * 2);
   ctx.fill();
 
   // Clouds
   ctx.fillStyle = t < 0.5 ? "white" : "gray";
   ctx.beginPath();
-  ctx.arc(200 - sky, 100, 30, 0, Math.PI * 2);
-  ctx.arc(230 - sky, 100, 25, 0, Math.PI * 2);
-  ctx.arc(170 - sky, 100, 25, 0, Math.PI * 2);
+  ctx.arc(200 - skyX, 100 - skyY, 30, 0, Math.PI * 2);
+  ctx.arc(230 - skyX, 100 - skyY, 25, 0, Math.PI * 2);
+  ctx.arc(170 - skyX, 100 - skyY, 25, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(600 - sky, 80, 30, 0, Math.PI * 2);
-  ctx.arc(630 - sky, 80, 25, 0, Math.PI * 2);
-  ctx.arc(570 - sky, 80, 25, 0, Math.PI * 2);
+  ctx.arc(600 - skyX, 80 - skyY, 30, 0, Math.PI * 2);
+  ctx.arc(630 - skyX, 80 - skyY, 25, 0, Math.PI * 2);
+  ctx.arc(570 - skyX, 80 - skyY, 25, 0, Math.PI * 2);
   ctx.fill();
 
   // Mountains
-  const mtn = cameraX * CAMERA.parallaxMountain;
+  const mtnX = camera.x * CAMERA.parallaxMountain;
+  const mtnY = camera.y * CAMERA.parallaxMountain;
   ctx.fillStyle = "#556B2F";
   ctx.beginPath();
-  ctx.moveTo(-200 - mtn, WORLD.ground);
-  ctx.lineTo(100 - mtn, 150);
-  ctx.lineTo(400 - mtn, WORLD.ground);
+  ctx.moveTo(-200 - mtnX, WORLD.ground - mtnY);
+  ctx.lineTo(100 - mtnX, 150 - mtnY);
+  ctx.lineTo(400 - mtnX, WORLD.ground - mtnY);
   ctx.fill();
 
   ctx.fillStyle = "#6B8E23";
   ctx.beginPath();
-  ctx.moveTo(200 - mtn, WORLD.ground);
-  ctx.lineTo(500 - mtn, 120);
-  ctx.lineTo(800 - mtn, WORLD.ground);
+  ctx.moveTo(200 - mtnX, WORLD.ground - mtnY);
+  ctx.lineTo(500 - mtnX, 120 - mtnY);
+  ctx.lineTo(800 - mtnX, WORLD.ground - mtnY);
   ctx.fill();
 }
 
-function drawTerrain(ctx, cameraX) {
+function drawTerrain(ctx, camera) {
   const { ground, waterWidth, mapStart, mapEnd, groundThickness, waterThickness, waterYOffset } = WORLD;
 
   // Left water
   ctx.fillStyle = "#1E90FF";
-  ctx.fillRect(0 - cameraX, ground + waterYOffset, waterWidth, waterThickness);
+  ctx.fillRect(0 - camera.x, ground + waterYOffset - camera.y, waterWidth, waterThickness);
   // Ground band
   ctx.fillStyle = "#228822";
-  ctx.fillRect(waterWidth - cameraX, ground, mapEnd - mapStart - waterWidth, groundThickness);
+  ctx.fillRect(waterWidth - camera.x, ground - camera.y, mapEnd - mapStart - waterWidth, groundThickness);
   // Right water
   ctx.fillStyle = "#1E90FF";
-  ctx.fillRect(mapEnd - waterWidth - cameraX, ground + waterYOffset, waterWidth, waterThickness);
+  ctx.fillRect(mapEnd - waterWidth - camera.x, ground + waterYOffset - camera.y, waterWidth, waterThickness);
 }
 
-function drawTrees(ctx, world, cameraX) {
+function drawTrees(ctx, world, camera) {
   const { tree, fruit } = FLORA;
   world.trees.forEach((t) => {
-    const screenX = t.x - cameraX;
+    const screenX = t.x - camera.x;
 
-    ctx.drawImage(images.treeTrunk, screenX, t.y + tree.trunkOffsetY, tree.trunkWidth, tree.trunkHeight);
+    ctx.drawImage(images.treeTrunk, screenX, t.y + tree.trunkOffsetY - camera.y, tree.trunkWidth, tree.trunkHeight);
 
     const leavesX = screenX - (tree.leavesWidth / 2 - tree.trunkWidth / 2);
     const baseLeavesY = leavesY(t);
-    ctx.drawImage(images.treeLeaves, leavesX, baseLeavesY, tree.leavesWidth, tree.leavesHeight);
+    ctx.drawImage(images.treeLeaves, leavesX, baseLeavesY - camera.y, tree.leavesWidth, tree.leavesHeight);
 
     t.fruits.forEach((f) => {
       if (!f.collected) {
-        ctx.drawImage(images.fruit, f.x - cameraX, baseLeavesY + f.offsetY, fruit.width, fruit.height);
+        ctx.drawImage(images.fruit, f.x - camera.x, baseLeavesY + f.offsetY - camera.y, fruit.width, fruit.height);
       }
     });
   });
 }
 
-function drawPlants(ctx, world, cameraX) {
+function drawPlants(ctx, world, camera) {
   const { plant } = FLORA;
   const w = plant.sheetWidth * plant.scale;
   const h = plant.sheetHeight * plant.scale;
   world.plants.forEach((p) => {
-    const screenX = p.x - cameraX;
+    const screenX = p.x - camera.x;
     if (!p.collected) {
-      ctx.drawImage(images.plant, screenX, p.y, w, h);
+      ctx.drawImage(images.plant, screenX, p.y - camera.y, w, h);
     } else {
       // collected: draw a squashed stub
-      ctx.drawImage(images.plant, screenX, p.y + h * 0.5, w, h * 0.25);
+      ctx.drawImage(images.plant, screenX, p.y + h * 0.5 - camera.y, w, h * 0.25);
     }
   });
 }
 
-function drawPlayer(ctx, player, cameraX) {
+function drawPlayer(ctx, player, camera) {
   const { states } = SPRITE;
   let column;
   if (player.animationState === "right") column = states.right + player.frameIndex;
@@ -137,7 +147,7 @@ function drawPlayer(ctx, player, cameraX) {
   ctx.drawImage(
     images.character,
     column * FRAME_WIDTH, 0, FRAME_WIDTH, SPRITE.frameHeight,
-    player.x - cameraX, player.y + PLAYER.drawOffsetY,
+    player.x - camera.x, player.y + PLAYER.drawOffsetY - camera.y,
     player.w, player.h
   );
 }
@@ -159,12 +169,21 @@ function drawUI(ctx, world, player) {
   ctx.fillRect(barX, barY, (player.stamina / STAMINA.max) * barWidth, barHeight);
 }
 
-export function render(ctx, world, player, cameraX) {
+export function render(ctx, world, player, camera) {
   ctx.clearRect(0, 0, CANVAS.width, CANVAS.height);
-  drawBackground(ctx, cameraX);
-  drawTerrain(ctx, cameraX);
-  drawTrees(ctx, world, cameraX);
-  drawPlants(ctx, world, cameraX);
-  drawPlayer(ctx, player, cameraX);
+
+  // World layers are drawn under a zoom transform so the camera sits closer
+  // to the player. Each draw call subtracts the camera position (in world
+  // units), and the zoom scales everything about the top-left origin.
+  ctx.save();
+  ctx.scale(CAMERA.zoom, CAMERA.zoom);
+  drawBackground(ctx, camera);
+  drawTerrain(ctx, camera);
+  drawTrees(ctx, world, camera);
+  drawPlants(ctx, world, camera);
+  drawPlayer(ctx, player, camera);
+  ctx.restore();
+
+  // UI is drawn in screen space (unscaled) so text stays crisp and fixed.
   drawUI(ctx, world, player);
 }

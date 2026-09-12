@@ -25,7 +25,7 @@ export const PHYSICS = {
   walkSpeed: 120,     // 2 px/frame * 60
   runSpeed: 300,      // 5 px/frame * 60
   slowSpeed: 72,      // 1.2 px/frame * 60
-  jumpVelocity: -300, // -5 px/frame * 60
+  jumpVelocity: -400, // -5 px/frame * 60 smaller the higher
 };
 
 export const PLAYER = {
@@ -108,11 +108,14 @@ export const CYCLE = {
   nightBottom: "#1A1A40",
 };
 
-// Camera follow
+// Camera follow. The camera centers on the player (offset by half the view),
+// so the player stays in the middle of the viewport horizontally and
+// vertically. Values are in the range 0..1 as a fraction of the view.
 export const CAMERA = {
-  leadRight: 0.15,  // fraction of screen ahead when facing right
-  leadLeft: 0.85,
-  smoothing: 0.05,  // lerp factor toward target
+  zoom: 2,          // scene magnification; >1 brings the camera closer
+  centerX: 0.5,     // where the player sits across the view (0.5 = middle)
+  centerY: 0.5,     // where the player sits down the view (0.5 = middle)
+  smoothing: 0.1,   // lerp factor toward target (higher = snappier)
   parallaxSky: 0.1,
   parallaxMountain: 0.3,
 };
