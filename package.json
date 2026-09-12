@@ -1,0 +1,13 @@
+{
+  "name": "little-warrior-game",
+  "version": "0.1.0",
+  "description": "A small 2D browser game with an animated warrior, collectibles and a day/night cycle.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "http-server -p 8123 -c-1 -o"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
