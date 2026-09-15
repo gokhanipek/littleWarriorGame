@@ -5,7 +5,8 @@ import { initInput } from "./input.js";
 import { createPlayer, updatePlayer } from "./player.js";
 import { createWorld, updateCollection, updateTimer } from "./world.js";
 import { render } from "./render.js";
-import { submitScore, sanitizeName } from "./leaderboard.js";
+import { submitScore } from "./leaderboard.js";
+import { resolveIdentity, loadIdentity } from "./identity.js";
 
 const canvas = document.getElementById("game");
 canvas.width = CANVAS.width;
@@ -38,15 +39,16 @@ function hideStartOverlay() {
   startOverlay.style.display = "none";
 }
 
-// Begin a run once a valid name is entered.
+// Begin a run once a valid name is entered. The tagged name (e.g. "Alex#0042")
+// becomes the identity used for scoring, and is persisted in localStorage.
 function startGame() {
-  const name = sanitizeName(nameInput.value);
-  if (!name) {
+  const identity = resolveIdentity(nameInput.value);
+  if (!identity) {
     startError.textContent = "Please enter a name.";
     nameInput.focus();
     return;
   }
-  playerName = name;
+  playerName = identity.tagged;
   hideStartOverlay();
   world.phase = "playing";
   canvas.focus();
@@ -71,8 +73,15 @@ function restart() {
   prevPhase = world.phase;
   camera.x = 0;
   camera.y = 0;
-  nameInput.value = playerName; // pre-fill last name
+  prefillName(); // restore the saved base name (without the tag)
   showStartOverlay();
+}
+
+// Pre-fill the name field from the saved identity so returning players don't
+// retype their name (and keep the same tag).
+function prefillName() {
+  const saved = loadIdentity();
+  if (saved) nameInput.value = saved.base;
 }
 
 // Submit the finished run's score. Fire-and-forget with console reporting so
@@ -147,6 +156,8 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
-// Show the name entry immediately on load, then run the loop.
+// Show the name entry immediately on load (pre-filled if we've seen this
+// player before), then run the loop.
+prefillName();
 showStartOverlay();
 requestAnimationFrame(loop);
