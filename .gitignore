@@ -7,3 +7,7 @@ Thumbs.db
 
 # Logs
 npm-debug.log*
+
+# supabase (schema / seed / setup SQL — keep out of public repo)
+supabase/
+*.sql
