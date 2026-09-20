@@ -2,29 +2,55 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Little Warrior</title>
   <style>
-    body {
-      margin: 0;
-      background: #222;
-      font-family: Arial, sans-serif;
+    :root {
+      /* Native internal resolution of the game canvas. */
+      --game-w: 800px;
+      --game-h: 400px;
     }
 
-    /* Centered stage that holds the canvas and any overlays. */
-    #stage {
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #222;
+      font-family: Arial, sans-serif;
+      /* Prevent the browser from hijacking touch gestures (scroll/zoom) so
+         the on-screen controls feel like a game pad. */
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Fills the viewport and centers the scaled stage. */
+    #viewport {
       position: fixed;
-      left: 50%;
-      top: 50%;
-      width: 800px;
-      height: 400px;
-      margin-left: -400px;
-      margin-top: -200px;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* The stage keeps the game's native 800x400 size; a CSS transform scales
+       it to fit the viewport (set from JS in --scale). The canvas therefore
+       still renders at 800x400 internally, so no game logic changes. */
+    #stage {
+      position: relative;
+      width: var(--game-w);
+      height: var(--game-h);
+      transform: scale(var(--scale, 1));
+      transform-origin: center center;
     }
 
     #game {
       display: block;
-      width: 800px;
-      height: 400px;
+      width: var(--game-w);
+      height: var(--game-h);
       background: #87CEEB; /* sky blue */
       border: 1px solid #333;
     }
@@ -41,6 +67,7 @@
       background: rgba(0, 0, 0, 0.55);
       color: #fff;
       text-align: center;
+      padding: 12px;
     }
 
     #startOverlay h1 {
@@ -88,20 +115,84 @@
     }
 
     #leaderboardLink:hover { text-decoration: underline; }
+
+    /* ---------------------------------------------------------------
+       On-screen touch controls. Hidden by default; shown only on
+       touch-capable devices (toggled via the .touch class on <body>).
+       They live OUTSIDE #stage so they are not scaled with the canvas
+       and always sit at a comfortable, thumb-reachable size.
+       --------------------------------------------------------------- */
+    #touchControls { display: none; }
+
+    body.touch #touchControls {
+      display: block;
+    }
+
+    .touch-pad {
+      position: fixed;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 20;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    #touchLeftPad { left: max(18px, env(safe-area-inset-left)); }
+    #touchRightPad { right: max(18px, env(safe-area-inset-right)); }
+
+    .touch-btn {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+      font-size: 26px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      touch-action: none;
+      user-select: none;
+    }
+
+    /* Visual feedback while a control is held. */
+    .touch-btn.active {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .touch-btn.run { font-size: 15px; }
   </style>
 </head>
 <body>
-<div id="stage">
-  <canvas id="game" width="800" height="400"></canvas>
+<div id="viewport">
+  <div id="stage">
+    <canvas id="game" width="800" height="400"></canvas>
 
-  <div id="startOverlay">
-    <h1>Little Warrior</h1>
-    <p>Collect fruits (+2s) and plants (+1s) before time runs out.</p>
-    <p>Arrows to move &bull; Shift to run &bull; Space to jump</p>
-    <input id="nameInput" type="text" maxlength="24" placeholder="Enter your name" autocomplete="off" />
-    <div id="startError"></div>
-    <button id="startButton" class="btn">Start</button>
-    <a id="leaderboardLink" href="./leaderboard.html">View leaderboard</a>
+    <div id="startOverlay">
+      <h1>Little Warrior</h1>
+      <p>Collect fruits (+2s) and plants (+1s) before time runs out.</p>
+      <p>Arrows / on-screen buttons to move &bull; Shift / RUN to run &bull; Space / ⤒ to jump</p>
+      <input id="nameInput" type="text" maxlength="24" placeholder="Enter your name" autocomplete="off" />
+      <div id="startError"></div>
+      <button id="startButton" class="btn">Start</button>
+      <a id="leaderboardLink" href="./leaderboard.html">View leaderboard</a>
+    </div>
+  </div>
+</div>
+
+<!-- On-screen controls for touch devices. Each button maps to the same
+     key code the keyboard handler uses (see js/input.js). -->
+<div id="touchControls">
+  <div id="touchLeftPad" class="touch-pad">
+    <button class="touch-btn" data-key="ArrowLeft" aria-label="Move left">◀</button>
+    <button class="touch-btn" data-key="ArrowRight" aria-label="Move right">▶</button>
+  </div>
+  <div id="touchRightPad" class="touch-pad">
+    <button class="touch-btn run" data-key="ShiftLeft" aria-label="Run">RUN</button>
+    <button class="touch-btn" data-key="Space" aria-label="Jump">⤒</button>
   </div>
 </div>
 

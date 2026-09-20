@@ -199,7 +199,7 @@ function drawGameOver(ctx, world) {
   ctx.font = "18px Arial";
   ctx.fillStyle = "#DDD";
   ctx.fillText("Score submitted to the leaderboard", cx, 265);
-  ctx.fillText("Press Enter or R to play again", cx, 295);
+  ctx.fillText("Tap or press Enter / R to play again", cx, 295);
 
   ctx.textAlign = "left";
 }

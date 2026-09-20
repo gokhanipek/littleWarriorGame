@@ -2,6 +2,7 @@
 
 import { CANVAS, WORLD, CAMERA } from "./config.js";
 import { initInput } from "./input.js";
+import { initViewport } from "./viewport.js";
 import { createPlayer, updatePlayer } from "./player.js";
 import { createWorld, updateCollection, updateTimer } from "./world.js";
 import { render } from "./render.js";
@@ -14,6 +15,7 @@ canvas.height = CANVAS.height;
 const ctx = canvas.getContext("2d");
 
 initInput();
+initViewport();
 
 // Start overlay elements (name entry lives in the DOM since canvas can't
 // take text input).
@@ -63,6 +65,15 @@ nameInput.addEventListener("keydown", (e) => {
 // again (keeping the previous name pre-filled for convenience).
 document.addEventListener("keydown", (e) => {
   if (world.phase === "gameover" && (e.code === "Enter" || e.code === "KeyR")) {
+    restart();
+  }
+});
+
+// Touch equivalent: tapping the game-over screen restarts the run. (The name
+// overlay uses its own Start button, so this only fires during game over.)
+canvas.addEventListener("pointerdown", (e) => {
+  if (world.phase === "gameover") {
+    e.preventDefault();
     restart();
   }
 });
